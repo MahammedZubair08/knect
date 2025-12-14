@@ -106,3 +106,38 @@ export const addComment = async (req, res) => {
   }
 };
 
+export const getConnectionsFeed = async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Math.min(Number(req.query.limit) || 10, 50);
+    const skip = (page - 1) * limit;
+
+    // Logged-in user
+    const user = req.user;
+
+    // Include user's own posts + connections' posts
+    const authorIds = [user._id, ...user.connections];
+
+    const posts = await Post.find({
+      author: { $in: authorIds },
+    })
+      .populate("author", "name headline")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const totalPosts = await Post.countDocuments({
+      author: { $in: authorIds },
+    });
+
+    res.json({
+      page,
+      totalPages: Math.ceil(totalPosts / limit),
+      totalPosts,
+      posts,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch connections feed" });
+  }
+};
