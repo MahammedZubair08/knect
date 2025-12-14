@@ -1,20 +1,22 @@
 import express from "express";
 import dotenv from "dotenv";
-
+import connectDB from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
 dotenv.config();
 
-const app = express();
+// Connect to MongoDB
+connectDB();
 
-// Middleware to parse JSON request bodies
+const app = express();
 app.use(express.json());
 
-// Health check route
 app.get("/", (req, res) => {
   res.send("Knect API is running");
 });
 
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log(`Knect server running on port ${PORT}`);
 });
+
+app.use("/api/auth", authRoutes);
